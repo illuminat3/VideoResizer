@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP4 Resizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        input, button {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Upload an MP4 Video</h2>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".mp4">
+        <button type="submit">Upload & Resize</button>
+    </form>
+
+    {% if filename %}
+    <h3>Download Resized Video</h3>
+    <a href="{{ url_for('download_file', filename=filename) }}">Download</a>
+    {% endif %}
+
+</body>
+</html>
