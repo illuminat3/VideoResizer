@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, jsonify
 import subprocess
 from werkzeug.utils import secure_filename
 
@@ -22,11 +22,11 @@ def allowed_file(filename):
 def upload_file():
     if request.method == "POST":
         if "file" not in request.files:
-            return "No file part"
+            return jsonify({"error": "No file part"}), 400
 
         file = request.files["file"]
         if file.filename == "":
-            return "No selected file"
+            return jsonify({"error": "No selected file"}), 400
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
@@ -48,13 +48,27 @@ def upload_file():
             ]
             subprocess.run(command, check=True)
 
-            return render_template("index.html", filename="resized_" + filename)
+            return jsonify({"filename": "resized_" + filename}), 200
 
-    return render_template("index.html", filename=None)
+    return render_template("index.html")
 
 @app.route("/download/<filename>")
 def download_file(filename):
-    return send_from_directory(app.config["OUTPUT_FOLDER"], filename, as_attachment=True)
+    file_path = os.path.join(app.config["OUTPUT_FOLDER"], filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
+
+    response = send_from_directory(app.config["OUTPUT_FOLDER"], filename, as_attachment=True)
+
+    @response.call_on_close
+    def cleanup():
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print(f"Error deleting file: {e}")
+
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True)
